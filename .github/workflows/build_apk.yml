@@ -1,0 +1,42 @@
+name: Build Switch2Emu APK from ZIP
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Unzip Project Source
+        run: |
+          unzip -q Switch2Emu_Zelda_NUP_Edition.zip
+          if [ -d "Switch2Emu_Android_Project" ]; then
+            cp -r Switch2Emu_Android_Project/* .
+          fi
+
+      - name: Build Debug APK with Gradle
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+        run: |
+          # Aceptar automáticamente licencias del SDK de Android
+          mkdir -p $ANDROID_HOME/licenses
+          echo "24333f8a63b6825ea3c5514f83c2829b004d1fee" > $ANDROID_HOME/licenses/android-sdk-license
+          echo "84831b9409646a918e30573bab4c9c91346d8abd" >> $ANDROID_HOME/licenses/android-sdk-license
+          
+          gradle assembleDebug
+
+      - name: Upload Compiled APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Switch2Emu-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
